@@ -59,7 +59,7 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param channelId the ID of the channel (locally) the packet was received on.
      * @param packet the Universal packet encoded by the source and relayed by the relayer.
      */
-    function onRecvUniversalPacket(bytes32 channelId, UniversalPacket calldata packet)
+   function onRecvUniversalPacket(bytes32 channelId, UniversalPacket calldata packet)
         external
         override
         onlyIbcMw
@@ -68,8 +68,6 @@ contract CCQueryUC is UniversalChanIbcApp {
         // You can leave the following function empty
         // This contract will need to be sending and acknowledging packets and not receiving them to complete the challenge
         // The reference implemention of onRecvUniversalPacket on the base contract you will be calling is below
-
-        
         recvedPackets.push(UcPacketWithChannel(channelId, packet));
 
 (address sender, string memory query) = abi.decode(packet.appData, (address, string));
@@ -77,16 +75,6 @@ contract CCQueryUC is UniversalChanIbcApp {
 bytes memory payload = abi.encode(sender, "mint");
 
 return AckPacket(true, payload);
-        uint64 _counter = getCounter();
-
-        (address _caller, string memory _query) = abi.decode(packet.appData, (address, string));
-
-        require(!addressMap[_caller], "Address already queried");
-        if (_counter >= 500) {
-            return AckPacket(true, abi.encode(LIMIT_MESSAGE));
-        }
-
-    
     }
 
     /**
