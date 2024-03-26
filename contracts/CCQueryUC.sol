@@ -14,7 +14,7 @@ contract CCQueryUC is UniversalChanIbcApp {
     event LogQuery(address indexed caller, string query, uint64 counter);
     event LogAcknowledgement(string message);
 
-    string private constant SECRET_MESSAGE = "Polymer is not a bridge: ";
+    string private constant SECRET_MESSAGE = "Polymer Challenge 4 NFT: ";
     string private constant LIMIT_MESSAGE = "Sorry, but the 500 limit has been reached, stay tuned for challenge 4";
 
     constructor(address _middleware) UniversalChanIbcApp(_middleware) {}
@@ -40,8 +40,8 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param channelId The ID of the channel to send the packet to.
      * @param timeoutSeconds The timeout in seconds (relative).
      */
-  function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
-       string memory query = "crossChainQueryMint";
+    function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
+        string memory query = "crossChainQueryMint";
        bytes memory payload = abi.encode(msg.sender, query);
        uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
 
@@ -49,7 +49,7 @@ contract CCQueryUC is UniversalChanIbcApp {
        IbcUniversalPacketSender(mw).sendUniversalPacket(
            channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
        );
-   }
+    }
 
     /**
      * @dev Packet lifecycle callback that implements packet receipt logic and returns and acknowledgement packet.
@@ -79,7 +79,7 @@ contract CCQueryUC is UniversalChanIbcApp {
             return AckPacket(true, abi.encode(LIMIT_MESSAGE));
         }
 
-        if (keccak256(bytes(_query)) == keccak256(bytes("crossChainQuery"))) {
+        if (keccak256(bytes(_query)) == keccak256(bytes("crossChainQueryMint"))) {
             increment();
             addressMap[_caller] = true;
             uint64 newCounter = getCounter();
@@ -91,7 +91,7 @@ contract CCQueryUC is UniversalChanIbcApp {
 
             return AckPacket(true, abi.encode(_ackData));
         }
-       
+        
     }
 
     /**
@@ -103,11 +103,11 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param ack the acknowledgment packet encoded by the destination and relayed by the relayer.
      */
     function onUniversalAcknowledgement(bytes32 channelId, UniversalPacket memory packet, AckPacket calldata ack)
-        external
-        override
-        onlyIbcMw
-    {
-      ackPackets.push(UcAckWithChannel(channelId, packet, ack));
+       external
+       override
+       onlyIbcMw
+   {
+       ackPackets.push(UcAckWithChannel(channelId, packet, ack));
 
 
        // decode the counter from the ack packet
@@ -122,7 +122,7 @@ contract CCQueryUC is UniversalChanIbcApp {
        } else {
            emit MintAckReceived(caller, 0, "NFT minting limit reached");
        }
-    }
+   }
 
     /**
      * @dev Packet lifecycle callback that implements packet receipt logic and return and acknowledgement packet.
