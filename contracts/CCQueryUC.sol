@@ -41,14 +41,14 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param timeoutSeconds The timeout in seconds (relative).
      */
     function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
-        increment();
-        bytes memory payload = abi.encode(msg.sender, counter);
+       string memory query = "crossChainQueryMint";
+       bytes memory payload = abi.encode(msg.sender, query);
+       uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
 
-        uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
 
-        IbcUniversalPacketSender(mw).sendUniversalPacket(
-            channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
-);
+       IbcUniversalPacketSender(mw).sendUniversalPacket(
+           channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
+       );
     }
 
     /**
@@ -107,14 +107,21 @@ contract CCQueryUC is UniversalChanIbcApp {
         override
         onlyIbcMw
     {
-        ackPackets.push(UcAckWithChannel(channelId, packet, ack));
+      ackPackets.push(UcAckWithChannel(channelId, packet, ack));
 
-        // decode the counter from the ack packet
-        (uint64 _counter) = abi.decode(ack.data, (uint64));
 
-        if (_counter != counter) {
-            resetCounter();
-}
+       // decode the counter from the ack packet
+       (address caller, string memory _functionCall) = abi.decode(ack.data, (address, string));
+       require(balanceOf(caller) == 0, "Caller already has an NFT");
+
+
+       if (currentTokenId < 500) {
+           require(keccak256(bytes(_functionCall)) == keccak256(bytes("mint")), "Invalid function call");
+           mint(caller);
+           emit MintAckReceived(caller, currentTokenId, "NFT minted successfully");
+       } else {
+           emit MintAckReceived(caller, 0, "NFT minting limit reached");
+       }
     }
 
     /**
