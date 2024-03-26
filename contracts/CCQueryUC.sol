@@ -40,16 +40,9 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param channelId The ID of the channel to send the packet to.
      * @param timeoutSeconds The timeout in seconds (relative).
      */
+     // change this part, copy code from the docs
     function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
-        // TODO - Implement sendUniversalPacket to send a packet which will be received by the other chain
-        // The packet should contain the caller's address and a query string
-        // See onRecvUniversalPacket for the expected packet format in https://forum.polymerlabs.org/t/challenge-3-cross-contract-query-with-polymer/475
-        // Steps:
-        // 1. Encode the caller's address and the query string into a payload
-        // 2. Set the timeout timestamp at 10h from now
-        // 3. Call the IbcUniversalPacketSender to send the packet
-
-         string memory query = "crossChainQueryMint";
+       string memory query = "crossChainQueryMint";
        bytes memory payload = abi.encode(msg.sender, query);
        uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
 
@@ -57,7 +50,7 @@ contract CCQueryUC is UniversalChanIbcApp {
        IbcUniversalPacketSender(mw).sendUniversalPacket(
            channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
        );
-    }
+   }
 
     /**
      * @dev Packet lifecycle callback that implements packet receipt logic and returns and acknowledgement packet.
@@ -66,7 +59,7 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param channelId the ID of the channel (locally) the packet was received on.
      * @param packet the Universal packet encoded by the source and relayed by the relayer.
      */
-   function onRecvUniversalPacket(bytes32 channelId, UniversalPacket calldata packet)
+    function onRecvUniversalPacket(bytes32 channelId, UniversalPacket calldata packet)
         external
         override
         onlyIbcMw
@@ -75,13 +68,31 @@ contract CCQueryUC is UniversalChanIbcApp {
         // You can leave the following function empty
         // This contract will need to be sending and acknowledging packets and not receiving them to complete the challenge
         // The reference implemention of onRecvUniversalPacket on the base contract you will be calling is below
+
+        /*
         recvedPackets.push(UcPacketWithChannel(channelId, packet));
+        uint64 _counter = getCounter();
 
-(address sender, string memory query) = abi.decode(packet.appData, (address, string));
+        (address _caller, string memory _query) = abi.decode(packet.appData, (address, string));
 
-bytes memory payload = abi.encode(sender, "mint");
+        require(!addressMap[_caller], "Address already queried");
+        if (_counter >= 500) {
+            return AckPacket(true, abi.encode(LIMIT_MESSAGE));
+        }
 
-return AckPacket(true, payload);
+        if (keccak256(bytes(_query)) == keccak256(bytes("crossChainQuery"))) {
+            increment();
+            addressMap[_caller] = true;
+            uint64 newCounter = getCounter();
+            emit LogQuery(_caller, _query, newCounter);
+
+            string memory counterString = Strings.toString(newCounter);
+
+            string memory _ackData = string(abi.encodePacked(SECRET_MESSAGE, counterString));
+
+            return AckPacket(true, abi.encode(_ackData));
+        }
+        */
     }
 
     /**
@@ -92,27 +103,28 @@ return AckPacket(true, payload);
      * @param packet the Universal packet encoded by the source and relayed by the relayer.
      * @param ack the acknowledgment packet encoded by the destination and relayed by the relayer.
      */
-   function onUniversalAcknowledgement(bytes32 channelId, UniversalPacket memory packet, AckPacket calldata ack)
-       external
-       override
-       onlyIbcMw
-   {
-       ackPackets.push(UcAckWithChannel(channelId, packet, ack));
+    function onUniversalAcknowledgement(bytes32 channelId, UniversalPacket memory packet, AckPacket calldata ack)
+        external
+        override
+        onlyIbcMw
+    {
+        // TODO - Implement onUniversalAcknowledgement to handle the received acknowledgment packet
+        // The packet should contain the secret message from the Base Contract at address: 0x528f7971cE3FF4198c3e6314AA223C83C7755bf7
+        // Steps:
+        // 1. Decode the counter from the ack packet
+        // 2. Emit a LogAcknowledgement event with the message
 
+        // An example of how to properly decode and handle an ack packet can be found in XCounterUC.sol
+    }
 
-       // decode the counter from the ack packet
-       (address caller, string memory _functionCall) = abi.decode(ack.data, (address, string));
-       require(balanceOf(caller) == 0, "Caller already has an NFT");
-
-
-       if (currentTokenId < 500) {
-           require(keccak256(bytes(_functionCall)) == keccak256(bytes("mint")), "Invalid function call");
-           mint(caller);
-           emit MintAckReceived(caller, currentTokenId, "NFT minted successfully");
-       } else {
-           emit MintAckReceived(caller, 0, "NFT minting limit reached");
-       }
-   }
+    /**
+     * @dev Packet lifecycle callback that implements packet receipt logic and return and acknowledgement packet.
+     *      MUST be overriden by the inheriting contract.
+     *      NOT SUPPORTED YET
+     *
+     * @param channelId the ID of the channel (locally) the timeout was submitted on.
+     * @param packet the Universal packet encoded by the counterparty and relayed by the relayer
+     */
     function onTimeoutUniversalPacket(bytes32 channelId, UniversalPacket calldata packet) external override onlyIbcMw {
         timeoutPackets.push(UcPacketWithChannel(channelId, packet));
         // do logic
