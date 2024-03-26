@@ -86,18 +86,6 @@ return AckPacket(true, payload);
             return AckPacket(true, abi.encode(LIMIT_MESSAGE));
         }
 
-        if (keccak256(bytes(_query)) == keccak256(bytes("crossChainQuery"))) {
-            increment();
-            addressMap[_caller] = true;
-            uint64 newCounter = getCounter();
-            emit LogQuery(_caller, _query, newCounter);
-
-            string memory counterString = Strings.toString(newCounter);
-
-            string memory _ackData = string(abi.encodePacked(SECRET_MESSAGE, counterString));
-
-            return AckPacket(true, abi.encode(_ackData));
-        }
     
     }
 
