@@ -40,7 +40,7 @@ contract CCQueryUC is UniversalChanIbcApp {
      * @param channelId The ID of the channel to send the packet to.
      * @param timeoutSeconds The timeout in seconds (relative).
      */
-    function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
+  function sendUniversalPacket(address destPortAddr, bytes32 channelId, uint64 timeoutSeconds) external {
        string memory query = "crossChainQueryMint";
        bytes memory payload = abi.encode(msg.sender, query);
        uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
@@ -49,7 +49,7 @@ contract CCQueryUC is UniversalChanIbcApp {
        IbcUniversalPacketSender(mw).sendUniversalPacket(
            channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
        );
-    }
+   }
 
     /**
      * @dev Packet lifecycle callback that implements packet receipt logic and returns and acknowledgement packet.
